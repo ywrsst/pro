@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
+#include <conio.h> // _kbhit 함수를 사용하기 위해 추가합니다.
 
 using namespace std;
 
@@ -22,46 +23,54 @@ vector<pair<int, string>> romanumerals = {
     {1, "I"}
 };
 
-// 주어진 숫자를 로마숫자로 변환하는 함수입니다.
-string romanumeral(int n) {  //주어진 숫자 n을 로마 숫자로 변환하는 함수입니다.
+// 주어진 숫자를 로마숫자로 변환하는 함수.
+string romanumeral(int n) {  // 주어진 n값이 범위를 벗어나면 예외를 발생시킨다.
     if (n < 1 || n > 3999) {
-        throw invalid_argument("숫자 범위를 벗어났습니다.");  //n이 1부터 3999사이의 값이 아니면 invalid_argument 예외를 예외처리.
+        throw invalid_argument("숫자 범위를 벗어났습니다.");
     }
 
-    string result;  // result 변수에 로마 숫자를 누적
-    for (auto numeral : romanumerals) {
-        while (n >= numeral.first) {   //while문에서는 현재 딕셔너리 원소의 숫자에 해당하는 로마 숫자를 result에 누적합니다.                                     
-            result += numeral.second;  //이 때, 현재 원소의 숫자만큼 n을 감소
-            n -= numeral.first;
+    string result;  // 로마 숫자를 저장할 빈 문자열을 생성.
+    for (auto numeral : romanumerals) { // 로마 숫자 벡터에서 숫자와 로마 숫자의 pair을 하나씩 가져와서 처리.
+        while (n >= numeral.first) {    // 주어진 정수 n이 해당하는 로마 숫자의 값보다 크거나 같을 때까지 반복.
+            result += numeral.second;   // 로마 숫자 문자열에 해당하는 로마 숫자를 추가.
+            n -= numeral.first;         // 주어진 정수 n에서 해당하는 로마 숫자의 값을 빼줍니다.
         }
     }
-    return result;
+    return result;  // 변환된 로마 숫자 문자열을 반환.
 }
 
 int main() {
+    cout << "1부터 3999 사이의 숫자를 입력하세요 (ESC를 누르면 종료됩니다): ";
     while (true) {
-        string input;  //사용자로부터 입력을 받을 변수선언.
-        cout << "1부터 3999 사이의 숫자를 입력하세요 (ESC를 누르면 종료됩니다): ";
-        getline(cin, input);  // cin으로부터 한 줄을 읽어온다.
+        int num;
+        // 키보드에서 입력된 문자를 즉시 반환합니다.
+        if (_kbhit()) {   //_kbhit 키가 눌렸는지 인식하는 키로 인식하면 바로 getch로 키를 확인해서 내보냄.
+            char c = _getch(); // 키보드에서 입력된 문자를 즉시 반환.
+            if (c == 27) {     // ESC 키를 누르면 무한 반복을 종료
+                break;
+            }
+            int input = cin.get();  // 입력받은 문자를 숫자로 변환
+           
+            cin.unget();  // 문자를 다시 cin의 입력 버퍼로 돌려놓습니다.
+            if (cin >> num) {  // cin으로 숫자를 입력받습니다.
+                try {  // 예외를 처리.
+                    string roman_numeral = romanumeral(num); // 로마 숫자를 계산
+                    cout << roman_numeral << endl;           // 계산 결과를 출력
+                }
+                catch (invalid_argument& e) {       // 입력한 숫자가 범위를 벗어나면 예외를 발생시킨다.
+                    cerr << "에러: " << e.what() << endl;
+                }
+                cout << "1부터 3999 사이의 숫자를 입력하세요 (ESC를 누르면 종료됩니다): ";
+            }
+            else {
+                cerr << "에러: 올바른 숫자를 입력하세요." << endl;
+                cout << "1부터 3999 사이의 숫자를 입력하세요 (ESC를 누르면 종료됩니다): ";
+                cin.clear();  // cin의 에러 상태를 해제합니다.
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');  // cin의 입력 버퍼를 비웁니다.
+                
 
-        // ESC 키를 누른 경우 종료합니다.
-        if (input == "ESC") {
-            cout << "프로그램을 종료합니다." << endl;
-            break;
-        }
-
-        // 입력받은 문자를 숫자로 변환합니다.
-        try {
-            int num = stoi(input);  //입력받은 문자열을 정수로 변환.
-            string roman_numeral = romanumeral(num);//romanumeral 함수를 호출하여 정수를 로마숫자로 변환.
-            cout << roman_numeral << endl;
-        }
-        catch (invalid_argument& e) {  //stoi 함수가 변환할 수 없는 문자열을 받았을 경우 실행.
-            cerr << "에러: " << e.what() << endl;
-        }
-        catch (out_of_range& e) {     // stoi 함수가 변환 가능한 범위를 초과한 숫자를 받았을 경우 실행.
-            cerr << "에러: 입력한 숫자가 너무 큽니다." << endl;
+            }
         }
     }
     return 0;
-} 
+}
