@@ -1,61 +1,195 @@
 #include <iostream>
+#include <unordered_map>
 #include <string>
-#include <vector>
-#include <stdexcept>
-#include <conio.h> 
+#include <conio.h>
 
 using namespace std;
 
+int romanToInt(string s) {
+    unordered_map<char, int> roman = {
+        {'I', 1}, {'V', 5}, {'X', 10}, {'L', 50},
+        {'C', 100}, {'D', 500}, {'M', 1000}
+    };
 
-vector<pair<int, string>> romanumerals = {
-    {1000, "M"},
-    {900, "CM"},
-    {500, "D"},
-    {400, "CD"},
-    {100, "C"},
-    {90, "XC"},
-    {50, "L"},
-    {40, "XL"},
-    {10, "X"},
-    {9, "IX"},
-    {5, "V"},
-    {4, "IV"},
-    {1, "I"}
-};
+    int result = 0;
+    int prev = 0; // 이전 문자의 값 저장
+    int curr; // 현재 문자의 값 저장
+    int repeat_count = 0; // 현재 문자가 몇 번 반복되었는지 저장
 
-int get_number(string roman_numeral) {  //함수 get_number는 문자열 roman_numeral을 인자로 받고, 해당 로마숫자에 대응하는 아라비아숫자를 반환
-    int result = 0;                     //result 변수를 선언하고 0으로 초기화합니다. 이 변수에 로마숫자를 아라비아숫자로 변환한 결과를 누적
-    for (auto numeral : romanumerals) { //romanumerals에 대해 반복문을 돌린다. romanumerals은 로마숫자와 아라비아숫자 둘로 이루어짐.
-        while (roman_numeral.substr(0, numeral.second.length()) == numeral.second) {
-            result += numeral.first;
-            roman_numeral = roman_numeral.substr(numeral.second.length());
+    for (char c : s) {
+        curr = roman[c];
+
+        if (prev != 0 && prev < curr) {
+            // 작은 숫자가 큰 숫자의 왼쪽에 오는 경우 처리
+            if ((prev == 1 && (curr == 5 || curr == 10)) ||
+                (prev == 10 && (curr == 50 || curr == 100)) ||
+                (prev == 100 && (curr == 500 || curr == 1000))) {
+                result -= 2 * prev; // 작은 숫자의 값 2배 빼기
+                repeat_count = 0; // 이전 문자가 다른 문자로 바뀌었으므로 초기화
+            }
+            else {
+                return 0; // 잘못된 로마 숫자 입력
+            }
+        }
+
+        // 현재 문자가 연속해서 사용되는 경우 처리
+        if (prev == curr) {
+            if (repeat_count == 2) {
+                return 0; // 3번째 반복이므로 잘못된 로마 숫자 입력
+            }
+            repeat_count++;
+        }
+        else {
+            repeat_count = 0; // 이전 문자가 다른 문자로 바뀌었으므로 초기화
+        }
+
+        // V, L, D는 한 번만 사용 가능
+        if (c == 'V' || c == 'L' || c == 'D') {
+            if (repeat_count > 0) {
+                return 0; // 잘못된 로마 숫자 입력
+            }
+        }
+
+        // I, X, C, M은 연속해서 3번까지만 사용 가능
+        if (c == 'I' || c == 'X' || c == 'C' || c == 'M') {
+            if (repeat_count > 2) {
+                return 0; // 잘못된 로마 숫자 입력
+            }
+        }
+
+        result += curr;
+        prev = curr;
+    }
+
+    return result;
+}
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+bool isRomanNumeral(string s) {
+    int n = s.size();
+    int countI = 0, countX = 0, countC = 0, countM = 0;
+    for (int i = 0; i < n; i++) {
+        if (s[i] == 'I') {
+            countI++;
+            if (countI > 3) {
+                return false;
+            }
+        }
+        else if (s[i] == 'V') {
+            if (i > 0 && s[i - 1] == 'I') {
+                return false;
+            }
+            countI = 0;
+        }
+        else if (s[i] == 'X') {
+            if (i > 0 && s[i - 1] == 'I') {
+                countX++;
+                if (countX > 3) {
+                    return false;
+                }
+            }
+            else {
+                countX = 1;
+            }
+            countI = 0;
+        }
+        else if (s[i] == 'L') {
+            if (i > 0 && s[i - 1] == 'X') {
+                return false;
+            }
+            countI = 0;
+            countX = 0;
+        }
+        else if (s[i] == 'C') {
+            if (i > 0 && s[i - 1] == 'X') {
+                countC++;
+                if (countC > 3) {
+                    return false;
+                }
+            }
+            else {
+                countC = 1;
+            }
+            countI = 0;
+            countX = 0;
+        }
+        else if (s[i] == 'D') {
+            if (i > 0 && s[i - 1] == 'C') {
+                return false;
+            }
+            countI = 0;
+            countX = 0;
+            countC = 0;
+        }
+        else if (s[i] == 'M') {
+            if (i > 0 && s[i - 1] == 'C') {
+                countM++;
+                if (countM > 3) {
+                    return false;
+                }
+            }
+            else {
+                countM = 1;
+            }
+            countI = 0;
+            countX = 0;
+            countC = 0;
+        }
+        else {
+            return false;
         }
     }
-    if (result > 3999) {
-        throw invalid_argument("숫자 범위를 벗어났습니다.");
-    }
-    return result;  //// 아라비아숫자를 반환
+    return true;
 }
 
 int main() {
-    cout << "로마숫자를 입력하세요 (ESC를 누르면 종료됩니다): ";
+    string roman;
+    int num;
+    bool ch = true;
     while (true) {
-        int num;
-        string roman_numeral;
-        if (_kbhit()) {
-            char c = _getch();
-            if (c == 27) {
+        roman = ""; //저장할 string 값을 초기화
+        cout << "로마 숫자를 입력하세요. (esc를 누르면 종료): ";
+
+        while (true) {
+            while (!_kbhit()) { // 키보드 입력대기
+            }
+            char c = _getch();  // 키보드 값을 받음
+            if (c == 27) {  // esc키이면 종료
+                return 0;
+            }
+            else if (c == 13) { // 엔터키이면 입력루프를 나가며 변환
+
                 break;
             }
-            cin >> roman_numeral;                  // 사용자로부터 로마숫자를 입력받습니다.
-            try {
-                num = get_number(roman_numeral);   // 입력받은 로마숫자를 아라비아숫자로 변환합니다.
-                cout << num << endl;               // 변환된 아라비아숫자를 출력합니다.
+            else if (c == 8) { // 백스페이스키이면 입력지움
+                cout << "\b";
+                cout << " ";
+                cout << "\b";
+                roman.erase(roman.size() - 1);
             }
-            catch (invalid_argument& e) {   // 변환 과정에서 예외가 발생한 경우 에러 메시지를 출력
-                cerr << "에러: " << e.what() << endl; 
+            else { // 그외 일 경우 입력된 키보드 값을 string에 저장
+                cout << c;
+                roman = roman + c;
             }
-            cout << "로마숫자를 입력하세요 (ESC를 누르면 종료됩니다): "; // 사용자로부터 새로운 로마숫자를 입력받기 위해 입력 대기 상태로 돌아감
+        }
+        num = romanToInt(roman); // string의 값을 변환
+
+        ch = isRomanNumeral(roman);
+
+        if (num == -1 || 4000 <= num || !ch) { // 4000넘으면 에러 메세지 출력
+            cout << "잘못된 입력입니다. 다시 입력해주세요." << endl;
+            continue;
+        }
+        cout << endl;
+        if (num != 0) {
+            cout << "변환된 숫자: " << num << endl;
+        }
+        else
+        {
+            cout << "값을 입력해주세요" << endl;
         }
     }
     return 0;
