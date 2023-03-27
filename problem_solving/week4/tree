@@ -1,0 +1,84 @@
+#include <iostream>
+
+class Node {
+public:
+    int treedata;
+    Node* one;
+    Node* two;
+
+    Node(int treedata) {
+        this->treedata = treedata;
+        this->one = nullptr;
+        this->two = nullptr;
+    }
+
+    ~Node() {
+        delete one;
+        delete two;
+    }
+};
+
+class SearchTree {
+private:
+    Node* root;
+
+    void insert(int treedata, Node* node) {
+        if (treedata < node->treedata) {
+            if (node->one != nullptr) {
+                insert(treedata, node->one);
+            }
+            else {
+                node->one = new Node(treedata);
+            }
+        }
+        else {
+            if (node->two != nullptr) {
+                insert(treedata, node->two);
+            }
+            else {
+                node->two = new Node(treedata);
+            }
+        }
+    }
+
+    void traverse(Node* node) {
+        if (node != nullptr) {
+            traverse(node->one);
+            std::cout << node->treedata << " ";
+            traverse(node->two);
+        }
+    }
+
+public:
+    SearchTree() {
+        root = nullptr;
+    }
+
+    ~SearchTree() {
+        delete root;
+    }
+
+    void insert(int treedata) {
+        if (root == nullptr) {
+            root = new Node(treedata);
+        }
+        else {
+            insert(treedata, root);
+        }
+    }
+
+    void traverse() {
+        traverse(root);
+    }
+};
+
+int main() {
+    SearchTree tree;
+    tree.insert(10);
+    tree.insert(5);
+    tree.insert(15);
+    tree.insert(8);
+    tree.insert(12);
+    tree.traverse();
+    return 0;
+}
