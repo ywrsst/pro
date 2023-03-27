@@ -1,0 +1,64 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+vector<vector<int>> adj; // 인접 리스트를 저장할 벡터
+vector<bool> visited; // 방문 여부를 저장할 벡터
+
+void dfs(int here) { // DFS 탐색 함수
+    visited[here] = true; // 현재 노드를 방문했음을 표시
+    cout << here << " "; // 현재 노드 출력
+    for (int there : adj[here]) { // 현재 노드와 연결된 노드들을 모두 방문
+        if (!visited[there]) { // 방문하지 않은 경우에만 재귀 호출
+            dfs(there);
+        }
+    }
+}
+
+void bfs(int start) { // BFS 탐색 함수
+    queue<int> q; // 큐를 이용해 BFS 탐색
+    visited[start] = true; // 시작 노드를 방문했음을 표시
+    q.push(start); // 시작 노드를 큐에 삽입
+
+    while (!q.empty()) { // 큐가 빌 때까지 반복
+        int here = q.front(); // 큐의 맨 앞 원소를 가져옴
+        q.pop(); // 큐의 맨 앞 원소를 제거
+        cout << here << " "; // 현재 노드 출력
+        for (int there : adj[here]) { // 현재 노드와 연결된 노드들을 모두 방문
+            if (!visited[there]) { // 방문하지 않은 경우에만 큐에 삽입
+                visited[there] = true; // 해당 노드를 방문했음을 표시
+                q.push(there); // 해당 노드를 큐에 삽입
+            }
+        }
+    }
+}
+
+int main() {
+    int n, m, v; // 노드 개수, 간선 개수, 시작 노드
+    cin >> n >> m >> v;
+    adj.resize(n + 1); // 인접 리스트 벡터의 크기를 노드 개수 + 1로 설정
+    visited.resize(n + 1, false); // visited 벡터의 크기를 노드 개수 + 1로 설정하고 false로 초기화
+
+    for (int i = 0; i < m; i++) { // 간선 정보 입력받아 인접 리스트에 저장
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    for (int i = 1; i <= n; i++) { // 인접 리스트의 각 원소를 오름차순으로 정렬
+        sort(adj[i].begin(), adj[i].end());
+    }
+
+    dfs(v); // DFS 탐색 실행
+    cout << endl;
+
+    visited.assign(n + 1, false); // visited 벡터를 false로 초기화
+    bfs(v); // BFS 탐색 실행
+    cout << endl;
+
+    return 0;
+}
