@@ -12,7 +12,18 @@ struct Point {
 void PrintMap(char map[][COL_SIZE]) {
     for (int i = 0; i < ROW_SIZE; i++) {
         for (int j = 0; j < COL_SIZE; j++) {
-            std::cout << map[i][j] << ' ';
+            if (map[i][j] == '#') {
+                std::cout << "■ ";  // 장애물은 검은색 블록으로 표시
+            }
+            else if (map[i][j] == 'S') {
+                std::cout << "S ";  // 시작점은 초록색 블록으로 표시
+            }
+            else if (map[i][j] == 'E') {
+                std::cout << "E ";  // 도착점은 빨간색 블록으로 표시
+            }
+            else if (map[i][j] == '-') {
+                std::cout << "  ";  // 빈 공간은 흰색 블록으로 표시
+            }
         }
         std::cout << std::endl;
     }
@@ -52,7 +63,7 @@ bool BFS(char map[][COL_SIZE], Point start, Point end) {
 
 int main() {
     char map[ROW_SIZE][COL_SIZE] = {
-        {'-', '-', '#', '-', '-'},
+        {'-', '-', '-', '-', '-'},
         {'-', '-', '#', '-', '-'},
         {'-', '-', '#', '-', '-'},
         {'-', '-', '#', '-', '-'},
