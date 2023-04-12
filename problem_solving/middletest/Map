@@ -1,0 +1,184 @@
+#include <iostream>
+#include <queue>
+#include <vector>
+#include <conio.h> // getch() 함수를 사용하기 위한 헤더 파일
+
+
+
+using namespace std;
+
+const int MAP_SIZE = 5; // 맵 크기
+const char START_CHAR = 'S'; // 시작점
+const char GOAL_CHAR = 'G'; // 도착점
+const char OBSTACLE_CHAR = 'X'; // 장애물
+const char EMPTY_CHAR = '.'; // 빈 공간
+
+// 맵의 한 칸을 나타내는 구조체
+struct Cell {
+    int row; // 행
+    int col; // 열
+    int dist; // 시작점으로부터의 거리
+};
+
+// 너비우선 탐색(BFS) 함수
+bool bfs(vector<vector<char>>& map, int startRow, int startCol, int goalRow, int goalCol, vector<vector<int>>& dist) {
+    int dr[] = { -1, 0, 1, 0 }; // 상, 우, 하, 좌
+    int dc[] = { 0, 1, 0, -1 };
+    queue<Cell> q;
+    Cell startCell = { startRow, startCol, 0 };
+    q.push(startCell);
+    dist[startRow][startCol] = 0;
+
+    while (!q.empty()) {  // 큐를 사용하여 탐색을 수행하며, 시작점에서부터 도착점까지의 최단거리를 계산
+        Cell cur = q.front();
+        q.pop();
+        int row = cur.row;
+        int col = cur.col;
+        int curDist = cur.dist;
+
+        if (row == goalRow && col == goalCol) {
+            return true; // 도착점에 도달한 경우
+        }
+
+        for (int i = 0; i < 4; i++) {
+            int newRow = row + dr[i];
+            int newCol = col + dc[i];
+
+            // 맵 범위를 벗어나는 경우 무시
+            if (newRow < 0 || newRow >= MAP_SIZE || newCol < 0 || newCol >= MAP_SIZE) {
+                continue;
+            }
+
+            // 장애물이 있는 경우 무시
+            if (map[newRow][newCol] == OBSTACLE_CHAR) {
+                continue;
+            }
+
+            // 방문하지 않은 경우
+            if (dist[newRow][newCol] == -1) {
+                dist[newRow][newCol] = curDist + 1;
+                Cell nextCell = { newRow, newCol, curDist + 1 };
+                q.push(nextCell);
+            }
+        }
+    }
+
+    return false; // 도착점에 도달하지 못한 경우
+}
+
+// 맵 출력 함수
+void mapPrint(vector<vector<char>>& map) { // mapPrint() 함수는 맵의 현재 상태를 출력하는 함수 맵의 크기와 맵에 있는 문자들을 출력
+    cout << "현재 맵 상태:" << endl;
+    for (int i = 0; i < MAP_SIZE; i++) {
+        for (int j = 0; j < MAP_SIZE; j++) {
+            cout << map[i][j] << " ";
+        }
+        cout << endl;
+    }
+    cout << endl;
+}
+
+int main() {  //사용자로부터 맵을 입력받고, 시작점과 도착점의 좌표를 찾습니다. 그 후에 bfs() 함수를 호출하여 최단거리와 이동 경로를 계산하고 출력
+    // 맵 입력 받기
+
+    vector<vector<char>> map(MAP_SIZE, vector<char>(MAP_SIZE));
+    cout << "5x5 맵을 입력하세요 (S: 시작점, G: 도착점, X: 장애물, .: 빈 공간):" << endl;
+    for (int i = 0; i < MAP_SIZE; i++) {
+        for (int j = 0; j < MAP_SIZE; j++) {
+            cin >> map[i][j];
+        }
+    }
+    cout << "프로그램을 종료하려면 'E' 키를 눌러주세요." << endl;
+    while (true) {
+        char key;
+        cin >> key; // 키 입력 감지
+
+        if (key == 'e' || key == 'E') { // 'e' 키를 누르면 종료
+            break;
+        }
+    }
+
+
+    int startRow, startCol, goalRow, goalCol;
+    const int dr[] = { -1, 0, 1, 0 }; // 상, 우, 하, 좌 순서로 이동
+    const int dc[] = { 0, 1, 0, -1 };
+    bool startFound = false, goalFound = false;
+
+    // 시작점과 도착점의 위치 찾기
+    for (int i = 0; i < MAP_SIZE; i++) {
+        for (int j = 0; j < MAP_SIZE; j++) {
+            if (map[i][j] == START_CHAR) {
+                startRow = i;
+                startCol = j;
+                startFound = true;
+            }
+            else if (map[i][j] == GOAL_CHAR) {
+                goalRow = i;
+                goalCol = j;
+                goalFound = true;
+            }
+            if (startFound && goalFound) {
+                break;
+            }
+        }
+        if (startFound && goalFound) {
+            break;
+        }
+    }
+
+    if (!startFound || !goalFound) {
+        cout << "시작점 또는 도착점이 없습니다." << endl;
+        return 0;
+    }
+
+    vector<vector<int>> dist(MAP_SIZE, vector<int>(MAP_SIZE, -1));
+    bool found = bfs(map, startRow, startCol, goalRow, goalCol, dist);
+    
+
+    if (found) {
+        cout << "도착점에 도달했습니다." << endl;
+        cout << "최단 거리: " << dist[goalRow][goalCol] << "칸" << endl;
+        cout << "이동 경로:" << endl;
+
+        int row = goalRow;
+        int col = goalCol;
+
+        while (row != startRow || col != startCol) {
+            int newRow = row;
+            int newCol = col;
+            for (int i = 0; i < 4; i++) {
+                int prevRow = newRow - dr[i];
+                int prevCol = newCol - dc[i];
+                if (prevRow >= 0 && prevRow < MAP_SIZE && prevCol >= 0 && prevCol < MAP_SIZE &&
+                    dist[prevRow][prevCol] == dist[newRow][newCol] - 1) {
+                    newRow = prevRow;
+                    newCol = prevCol;
+                    break;
+                }
+            }
+            row = newRow;
+            col = newCol;
+            map[row][col] = '*'; // 맵에서 최단경로를 '*'로 표시
+        }
+
+        // 시작점에도 '*'로 표시
+        map[startRow][startCol] = '*';
+
+
+        // 맵 출력
+        for (int i = 0; i < MAP_SIZE; i++) {
+            for (int j = 0; j < MAP_SIZE; j++) {
+                cout << map[i][j] << " ";
+            }
+            cout << endl;
+        }
+    }
+
+
+    else {
+        cout << "도착점에 도달할 수 없습니다." << endl;
+    }
+    
+
+    return 0;
+}
