@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <Windows.h>
 #include <conio.h>
@@ -11,11 +12,16 @@ constexpr int MAX_JUMP = 7;          // 최대 점프 높이
 constexpr int Y_BASE = 10;           // 공룡의 초기 Y축 위치
 constexpr int Y_COLLISION = 4;       // Y축의 충돌 기준 위치
 constexpr int TREE_COLLISION = 7;    // 나무가 공룡과 충돌 가능한 X축 위치
-constexpr int TREE_START = 50;       // 나무가 생성되는 위치
+constexpr int TREE_START = 70;       // 나무가 생성되는 위치
 constexpr int TREE_END = -6;         // 나무가 사라지는 위치
-constexpr int SLEEP_TIME = 35;       // 게임 갱신 주기
+constexpr int SLEEP_TIME = 16;       // 게임 갱신 주기를 16밀리초로 변경
 
-//키눌림 확인
+constexpr int CACTUS_COLLISION = 7;  // 선인장이 공룡과 충돌 가능한 X축 위치
+constexpr int CACTUS_START = 110;     // 선인장이 생성되는 위치
+constexpr int CACTUS_END = -6;       // 선인장이 사라지는 위치
+constexpr int CACTUS_GAP = 50;       // 선인장 간격
+
+// 키눌림 확인
 int GetKeyDown()
 {
     if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) // ESC 키
@@ -26,9 +32,7 @@ int GetKeyDown()
     return 0;
 }
 
-
-//커서 관련 설정 (커서 안보이기)
-
+// 커서 관련 설정 (커서 안보이기)
 void CursorSettings()
 {
     CONSOLE_CURSOR_INFO cursorInfo = { 0, };
@@ -37,74 +41,88 @@ void CursorSettings()
     SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursorInfo);
 }
 
-//커서 옮기기
+// 커서 옮기기
 void SetKeyCursor(int _nX, int _nY)
 {
     COORD cursorPos = { (SHORT)_nX, (SHORT)_nY };
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), cursorPos);
 }
 
-//점수판 그리기
-
+// 점수판 그리기
 void DrawScore(int nScore)
 {
     SetKeyCursor(0, 0);
     printf("Score : %d\n", nScore);
 }
 
-
-//공룡 그리기
+// 공룡 그리기
 void DrawDino(int nY)
 {
-    static bool bFootToggle = false;    // 공룡 그리기가 갱신될 때 발의 위치를 바꿈
     SetKeyCursor(0, Y_BASE - nY);       // 공룡의 그리기 위치 변경
 
-    PRINTLN("    ■■");
-    PRINTLN("    ■");
-    PRINTLN("■■■■■");
-    if (bFootToggle)
-    {
-        PRINTLN("  ■  ■");
-    }
-    else
-    {
-        PRINTLN("  ■  ■");
-    }
-
-    bFootToggle = !bFootToggle;
+    printf("    ■■\n");
+    printf("    ■\n");
+    printf("■■■■■\n");
+    printf("  ■  ■\n");
 }
 
-
-//나무 그리기  나무의 X위치
-
+// 나무 그리기
 void DrawTree(int nX)
 {
     if (nX >= 0)
     {
         SetKeyCursor(nX, Y_BASE);
-        PRINTLN("    ■");
+        printf("    ■");
         SetKeyCursor(nX, Y_BASE + 1);
-        PRINTLN("■  ■");
+        printf("■  ■");
         SetKeyCursor(nX, Y_BASE + 2);
-        PRINTLN("■■■");
+        printf("■■■");
         SetKeyCursor(nX, Y_BASE + 3);
-        PRINTLN("  ■");
+        printf("  ■");
     }
     else if (nX >= -2)
     {
         nX = 0;
         SetKeyCursor(nX, Y_BASE);
-        PRINTLN("  ■");
+        printf("  ■");
         SetKeyCursor(nX, Y_BASE + 1);
-        PRINTLN("  ■");
+        printf("  ■");
         SetKeyCursor(nX, Y_BASE + 2);
-        PRINTLN("■■");
+        printf("■■");
         SetKeyCursor(nX, Y_BASE + 3);
-        PRINTLN("■");
+        printf("■");
     }
 }
 
-//게임 시작
+// 선인장 그리기
+void DrawCactus(int nX)
+{
+    if (nX >= 0)
+    {
+        SetKeyCursor(nX, Y_BASE);
+        printf("■■■■");
+        SetKeyCursor(nX, Y_BASE + 1);
+        printf("  ■");
+        SetKeyCursor(nX, Y_BASE + 2);
+        printf("■■■■");
+        SetKeyCursor(nX, Y_BASE + 3);
+        printf("  ■");
+    }
+    else if (nX >= -4)
+    {
+        nX = 0;
+        SetKeyCursor(nX, Y_BASE);
+        printf("  ■■■");
+        SetKeyCursor(nX, Y_BASE + 1);
+        printf("■");
+        SetKeyCursor(nX, Y_BASE + 2);
+        printf("  ■■■");
+        SetKeyCursor(nX, Y_BASE + 3);
+        printf("■");
+    }
+}
+
+// 게임 시작
 void GameStart()
 {
     while (true)
@@ -114,10 +132,11 @@ void GameStart()
 
         int nYPos = 0;                  // 공룡의 Y위치 (점프에 쓰임)
         int nTreePos = TREE_START;      // 나무가 생성되는 초기 X위치
+        int nCactusPos = CACTUS_START;  // 선인장이 생성되는 초기 X위치
 
         bool bIsJumpping = false;       // 현재 공룡이 점프 중인가
         bool bIsJumpped = false;        // 현재 공룡이 점프하여 최고 지점에 올랐는가
-        bool bIsCollision = false;      // 현재 공룡이 나무와 충돌하였는가
+        bool bIsCollision = false;      // 현재 공룡이 장애물과 충돌하였는가
 
         // 게임 루프
         while (true)
@@ -173,6 +192,12 @@ void GameStart()
             else
                 nTreePos = TREE_START;
 
+            // 선인장 위치
+            if (nCactusPos > CACTUS_END)
+                nCactusPos -= 2;
+            else
+                nCactusPos = CACTUS_START;
+
             // 충돌
             // 나무의 X위치가 충돌 가능 X위치라면
             if (nTreePos < TREE_COLLISION)
@@ -184,8 +209,19 @@ void GameStart()
                     bIsCollision = true;
             }
 
-            // 나무 그리기
+            // 선인장과 충돌
+            if (nCactusPos < CACTUS_COLLISION)
+            {
+                // 공룡의 Y위치가 충돌 가능 위치이고
+                // 선인장의 X위치가 충돌 가능 위치라면
+                if (nYPos < Y_COLLISION &&
+                    nCactusPos > CACTUS_END + 1)
+                    bIsCollision = true;
+            }
+
+            // 장애물 그리기
             DrawTree(nTreePos);
+            DrawCactus(nCactusPos);
             // 공룡 그리기
             DrawDino(nYPos);
 
@@ -199,8 +235,6 @@ void GameStart()
                 printf("Score : %d\n", nScore);
                 system("pause");
                 printf("다시 시작\n");
-
-
                 break;
             }
             // 충돌 상태가 아닐 때는 점수 증가
@@ -220,12 +254,11 @@ int main(void)
     {
         GameStart();
 
-        PRINTLN("게임 종료\n");
+        printf("게임 종료\n");
         break;
 
         system("cls");
-        
     }
-   
+
     return 0;
 }
