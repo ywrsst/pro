@@ -1,0 +1,191 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include "colors.h"
+#define Reset "\033[0m"
+
+using namespace std;
+
+class Object
+{
+public:
+    int X;  // x좌표
+    int Y;  // y좌표
+
+    int StartX; // 가로
+    int StartY; // 세로
+
+    bool Drawing;  // 오브젝트를 그렸는가
+
+    vector<vector<string>> image;
+
+public:
+    Object(int startX, int startY)
+    {
+        X = 0;
+        Y = 0;
+        Drawing = true;
+        StartX = startX;
+        StartY = startY;
+    }
+
+    virtual void Render(string screenBuffer[30][50])
+    {
+        // 기본적으로 아무 작업도 수행하지 않음
+    }
+};
+
+class Scene
+{
+public:
+    string printout;
+    string screenBuffer[30][50];
+
+private:
+    vector<Object*> objects;
+
+public:
+    Scene()
+    {
+        ClearScreenBuf();  // ClearScreenBuf 함수로 ScreenBuffer 초기화
+    }
+
+    void AddObject(Object* object)
+    {
+        objects.push_back(object);
+    }
+
+    void Draw()
+    {
+        ClearScreenBuf();
+
+        for (Object* object : objects)
+        {
+            object->Render(screenBuffer);
+        }
+
+        // Render the screen buffer
+        for (int y = 0; y < 30; y++)
+        {
+            for (int x = 0; x < 50; x++)
+            {
+                cout << screenBuffer[y][x];
+            }
+            cout << endl;
+        }
+        cout << printout;
+    }
+
+    void ClearScreenBuf()  // system(cls) 대신 오브젝트를 지움
+    {
+        for (int y = 0; y < 30; y++)
+        {
+            for (int x = 0; x < 50; x++)
+            {
+                screenBuffer[y][x] = "  ";
+            }
+        }
+    }
+};
+
+class Player : public Object
+{
+public:
+    Player(int x, int y, int startX, int startY) : Object(startX, startY)
+    {
+        X = x;
+        Y = y;
+        StartX = startX;
+        StartY = startY;
+        Drawing = true;
+
+        // image 초기화
+        image.resize(StartY);
+        for (int i = 0; i < StartY; i++)
+        {
+            image[i].resize(StartX);
+            for (int j = 0; j < StartX; j++)
+            {
+                image[i][j] = playershape[i][j];
+            }
+        }
+    }
+
+    string playershape[6][9] = {
+        {Red"■",Red"■",Red"■",Red"■",Red"■" Reset, "  ", "  ", "  ", "  "},
+        {Red"■",Red"■",Red"■",Red"■",Red"■",Red"■" Reset, "  ", "  ", "  "},
+        {Yellow"■",Yellow"■",Yellow"■",White"□",White"□",White"□",Yellow"■" Reset, "  ", "  "},
+        {Red"■",Red"■",Red"■",Red"□",Red"□",Red"□",Red"□",Red"■" Reset, "  "},
+        {Red"■",Red"■",Red"■",Red"■",Red"■",Red"■",Red"■",Red"■",Red"■" Reset},
+        {Blue"■",Blue"■" Reset, "  ", "  ",Blue"■",Blue"■" Reset, "  ", "  ", "  "}
+    };
+
+    void Render(string screenBuffer[30][50])
+    {
+        for (int i = 0; i < StartY; i++)
+        {
+            for (int j = 0; j < StartX; j++)
+            {
+                if (image[i][j] != "  ")
+                {
+                    screenBuffer[Y + i][X + j] = image[i][j];
+                }
+            }
+        }
+    }
+};
+
+class Cloud : public Object
+{
+public:
+    Cloud(int x, int y, int startX, int startY, int speed) : Object(startX, startY)
+    {
+        X = x;
+        Y = y;
+        Drawing = true;
+        StartX = startX;
+        StartY = startY;
+    }
+    string cloudshape[3][10] = {
+         {"  ", White"■",Blue"■",Blue"■",White"■" Reset,"  ","  ","  ","  ","  "},
+        {White"■",Blue"■",Blue"■",Blue"■",Blue"■",Blue"■",White"■" Reset,"  ","  ","  "},
+        {"  ",White"■",Blue"■",Blue"■",White"■" Reset,"  ","  ","  ","  ","  "}
+    };
+    void Render(string screenBuffer[30][50])
+    {
+        for (int i = 0; i < StartY; i++)
+        {
+            int currentY = Y + i;  // 실제 Y 좌표 계산
+            if (currentY < 30)
+            {
+                for (int j = 0; j < StartX; j++)
+                {
+                    int currentX = X + j;  // 실제 X 좌표 계산
+                    if (currentX >= 0 && currentX < 50)
+                    {
+                        if (cloudshape[i][j] != "  ")
+                        {
+                            screenBuffer[currentY][currentX] = cloudshape[i][j];
+                        }
+                    }
+                }
+            }
+        }
+    }
+};
+
+int main()
+{
+    Scene scene;
+
+    // 플레이어 생성 및 Scene에 추가
+    Player player(0, 18, 9, 6);
+    Cloud cloud(40, 5, 10, 3, 3);
+    scene.AddObject(&player);
+    scene.AddObject(&cloud);
+
+    // 화면 그리기
+    scene.Draw();
+
+    return 0;
+}
